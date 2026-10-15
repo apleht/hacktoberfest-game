@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Hacktoberfest Whack-a-PR</title>
+  <style>
+    :root{
+      --bg:#170624; /* dark purple */
+      --panel:#1f0b34;
+      --neon-pink:#ff4bd1;
+      --neon-green:#00ff95;
+      --muted:#8b7aa5;
+      --glass: rgba(255,255,255,0.03);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: radial-gradient(1200px 600px at 10% 10%, rgba(75,0,100,0.28), transparent),
+                  radial-gradient(900px 400px at 90% 90%, rgba(0,255,150,0.05), transparent),
+                  var(--bg);
+      color:#e8e6f3;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:32px;
+    }
+
+    .container{
+      width:min(960px,96vw);
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border:1px solid rgba(255,255,255,0.04);
+      padding:24px;
+      border-radius:12px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+    }
+
+    header{
+      display:flex;
+      gap:16px;
+      align-items:center;
+      margin-bottom:14px;
+    }
+    h1{
+      margin:0;
+      font-size:20px;
+      letter-spacing:0.6px;
+      color:var(--neon-pink);
+      text-shadow:0 0 18px rgba(255,75,209,0.15);
+    }
+    .controls{
+      margin-left:auto;
+      display:flex;
+      gap:12px;
+      align-items:center;
+    }
+    .btn{
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border:1px solid rgba(255,255,255,0.06);
+      color:var(--neon-pink);
+      padding:10px 14px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:600;
+      text-shadow:0 0 6px rgba(255,75,209,0.06);
+      box-shadow: 0 6px 20px rgba(75,0,100,0.35), inset 0 -2px 6px rgba(0,0,0,0.4);
+    }
+    .btn:active{transform:translateY(1px)}
+    .btn.start{
+      background: linear-gradient(90deg, rgba(0,255,149,0.07), rgba(255,75,209,0.03));
+      color: #fff;
+      border: 1px solid rgba(0,255,149,0.12);
+      text-shadow: 0 0 10px rgba(0,255,149,0.06);
+    }
+
+    .hud{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      padding:12px;
+      background:var(--glass);
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,0.02);
+      box-shadow: inset 0 -6px 14px rgba(0,0,0,0.4);
+    }
+    .stat{
+      display:flex;
+      flex-direction:column;
+      align-items:flex-start;
+      gap:6px;
+      min-width:120px;
+    }
+    .label{font-size:12px;color:var(--muted)}
+    .value{font-size:20px;font-weight:700;color:var(--neon-green); text-shadow:0 0 12px rgba(0,255,149,0.12)}
+
+    main{
+      display:flex;
+      gap:18px;
+      margin-top:18px;
+      align-items:flex-start;
+    }
+
+    .game-area{
+      background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(0,0,0,0.04));
+      padding:18px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,0.03);
+      flex:1;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:12px;
+      width:100%;
+      aspect-ratio:1;
+    }
+
+    .hole{
+      background:linear-gradient(180deg, rgba(0,0,0,0.35), rgba(0,0,0,0.5));
+      border-radius:14px;
+      position:relative;
+      overflow:visible;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      box-shadow: inset 0 -8px 12px rgba(0,0,0,0.6), 0 6px 18px rgba(0,0,0,0.6);
+      border:1px solid rgba(255,255,255,0.02);
+    }
+
+    .item{
+      position:absolute;
+      bottom:-18%;
+      transform:translateY(100%) scale(0.9);
+      transition:transform 180ms cubic-bezier(.2,.9,.2,1), filter 120ms;
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      padding:12px 14px;
+      border-radius:12px;
+      font-size:24px;
+      cursor:pointer;
+      user-select:none;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.6);
+      border:1px solid rgba(255,255,255,0.03);
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+
+    .item.up{
+      transform:translateY(0) scale(1);
+    }
+
+    .item.pr{
+      color:var(--neon-green);
+      text-shadow:0 0 10px rgba(0,255,149,0.12);
+      border:1px solid rgba(0,255,149,0.1);
+      box-shadow: 0 6px 24px rgba(0,255,149,0.04);
+    }
+
+    .item.bug{
+      color:var(--neon-pink);
+      text-shadow:0 0 10px rgba(255,75,209,0.12);
+      border:1px solid rgba(255,75,209,0.08);
+      box-shadow: 0 6px 24px rgba(255,75,209,0.03);
+    }
+
+    .emoji{
+      font-size:22px;
+      line-height:1;
+    }
+    .label-text{
+      font-size:14px;
+      opacity:0.92;
+      font-weight:700;
+    }
+
+    .message{
+      margin-top:12px;
+      padding:12px;
+      border-radius:10px;
+      text-align:center;
+      font-weight:700;
+      display:none;
+    }
+    .message.show{display:block}
+    .message.win{
+      background:linear-gradient(90deg, rgba(0,255,149,0.06), rgba(255,255,209,0.01));
+      color:var(--neon-green);
+      box-shadow: 0 8px 30px rgba(0,255,149,0.03);
+      border:1px solid rgba(0,255,149,0.08);
+    }
+    .message.lose{
+      background:linear-gradient(90deg, rgba(255,75,209,0.04), rgba(0,0,0,0.02));
+      color:var(--neon-pink);
+      border:1px solid rgba(255,75,209,0.06);
+      box-shadow: 0 8px 30px rgba(255,75,209,0.02);
+    }
+
+    /* small responsive */
+    @media (max-width:640px){
+      .hud{flex-wrap:wrap}
+      .value{font-size:18px}
+      .item{font-size:20px;padding:10px}
+      h1{font-size:16px}
+    }
+
+    /* small click pop animation */
+    .pop{
+      animation:pop 260ms ease;
+    }
+    @keyframes pop{
+      0%{transform:translateY(0) scale(1)}
+      50%{transform:translateY(-6px) scale(1.08)}
+      100%{transform:translateY(0) scale(1)}
+    }
+  </style>
+</head>
+<body>
+  <div class="container" role="application" aria-label="Hacktoberfest peli">
+    <header>
+      <h1>Hacktoberfest — Whack-a-PR</h1>
+      <div class="controls">
+        <div class="hud" aria-hidden="false">
+          <div class="stat" title="Pisteet">
+            <div class="label">Pisteet</div>
+            <div id="score" class="value">0</div>
+          </div>
+          <div class="stat" title="Ajalaskuri">
+            <div class="label">Aika</div>
+            <div id="time" class="value">15</div>
+          </div>
+          <div class="stat" title="Tavoite">
+            <div class="label">Tavoite</div>
+            <div class="value" style="color:var(--neon-pink)">4 pistettä</div>
+          </div>
+        </div>
+        <button id="startBtn" class="btn start" aria-pressed="false">Aloita</button>
+      </div>
+    </header>
+
+    <main>
+      <div class="game-area" aria-live="polite">
+        <div class="grid" id="grid" role="grid" aria-label="Pelinruudukko">
+          <!-- 9 holes -->
+          <div class="hole" data-index="0"></div>
+          <div class="hole" data-index="1"></div>
+          <div class="hole" data-index="2"></div>
+          <div class="hole" data-index="3"></div>
+          <div class="hole" data-index="4"></div>
+          <div class="hole" data-index="5"></div>
+          <div class="hole" data-index="6"></div>
+          <div class="hole" data-index="7"></div>
+          <div class="hole" data-index="8"></div>
+        </div>
+
+        <div id="message" class="message" role="status" aria-live="assertive"></div>
+      </div>
+    </main>
+    <p style="margin-top:12px;color:var(--muted);font-size:13px">Klikkaa vihreää 🟢 PR -kuvaketta saadaksesi pisteen. Klikkaa punaista 🐛 Bug -kuvaketta menettääksesi pisteen. Tavoitteena 4 pistettä 15 sekunnissa.</p>
+  </div>
+
+  <script>
+    (function(){
+      const startBtn = document.getElementById('startBtn');
+      const scoreEl = document.getElementById('score');
+      const timeEl = document.getElementById('time');
+      const messageEl = document.getElementById('message');
+      const holes = Array.from(document.querySelectorAll('.hole'));
+      const GAME_TIME = 15; // seconds
+      const WIN_SCORE = 4;
+
+      let score = 0;
+      let timeLeft = GAME_TIME;
+      let gameTimer = null;
+      let spawnTimer = null;
+      let running = false;
+      let lastHole = null;
+
+      function resetUI(){
+        score = 0;
+        timeLeft = GAME_TIME;
+        scoreEl.textContent = score;
+        timeEl.textContent = timeLeft;
+        messageEl.className = 'message';
+        messageEl.textContent = '';
+        clearAllItems();
+      }
+
+      function clearAllItems(){
+        holes.forEach(h => {
+          const it = h.querySelector('.item');
+          if(it){
+            it.remove();
+          }
+          h.dataset.active = 'false';
+        });
+      }
+
+      function randomTime(min, max){
+        return Math.round(Math.random() * (max - min) + min);
+      }
+
+      function randomHole(holes){
+        const idx = Math.floor(Math.random() * holes.length);
+        const hole = holes[idx];
+        // avoid same as last
+        if(hole === lastHole){
+          return randomHole(holes);
+        }
+        lastHole = hole;
+        return hole;
+      }
+
+      // probability: more PRs than bugs, but bugs still common
+      function randomType(){
+        // e.g., 70% PR, 30% Bug
+        return Math.random() < 0.68 ? 'pr' : 'bug';
+      }
+
+      function spawn(){
+        if(!running) return;
+        const timeVisible = randomTime(600, 1100); // ms
+        const hole = randomHole(holes);
+        const type = randomType();
+        if(hole.dataset.active === 'true') {
+          // try another hole
+          spawn();
+          return;
+        }
+        // create item
+        const el = document.createElement('button');
+        el.className = 'item ' + (type === 'pr' ? 'pr' : 'bug');
+        el.innerHTML = `<span class="emoji">${type === 'pr' ? '🟢' : '🐛'}</span><span class="label-text">${type === 'pr' ? 'PR' : 'Bug'}</span>`;
+        el.setAttribute('aria-label', type === 'pr' ? 'Pull Request' : 'Bug');
+        el.setAttribute('data-type', type);
+        el.setAttribute('data-active', 'true');
+        el.addEventListener('click', onItemClick);
+        hole.appendChild(el);
+        hole.dataset.active = 'true';
+
+        // trigger small delay so CSS transition occurs
+        window.requestAnimationFrame(() => {
+          el.classList.add('up');
+        });
+
+        // hide after timeVisible
+        setTimeout(() => {
+          // if still present, remove
+          if(hole.contains(el)){
+            el.removeEventListener('click', onItemClick);
+            el.classList.remove('up');
+            hole.dataset.active = 'false';
+            el.remove();
+          }
+        }, timeVisible);
+
+        // schedule next spawn
+        const nextDelay = randomTime(350, 700);
+        spawnTimer = setTimeout(spawn, nextDelay);
+      }
+
+      function onItemClick(e){
+        const el = e.currentTarget;
+        const hole = el.parentElement;
+        if(!running) return;
+        // prevent double counting: only count if data-active true
+        if(el.getAttribute('data-active') !== 'true') return;
+        el.setAttribute('data-active','false');
+        const type = el.getAttribute('data-type');
+        // visual pop
+        el.classList.add('pop');
+        // small delay then remove so pop is visible
+        setTimeout(() => {
+          el.remove();
+          hole.dataset.active = 'false';
+        }, 200);
+
+        if(type === 'pr'){
+          score += 1;
+          // brief glow
+          scoreEl.style.color = 'var(--neon-green)';
+          scoreEl.style.textShadow = '0 0 12px rgba(0,255,149,0.2)';
+        } else {
+          score = Math.max(0, score - 1);
+          scoreEl.style.color = 'var(--neon-pink)';
+          scoreEl.style.textShadow = '0 0 12px rgba(255,75,209,0.12)';
+        }
+        scoreEl.textContent = score;
+
+        // reset color after short time
+        setTimeout(() => {
+          scoreEl.style.color = '';
+          scoreEl.style.textShadow = '';
+        }, 300);
+
+        // check win
+        if(score >= WIN_SCORE){
+          endGame(true);
+        }
+      }
+
+      function tick(){
+        timeLeft -= 1;
+        timeEl.textContent = timeLeft;
+        // subtle timer color change when low
+        if(timeLeft <= 5){
+          timeEl.style.color = 'var(--neon-pink)';
+          timeEl.style.textShadow = '0 0 10px rgba(255,75,209,0.12)';
+        }
+        if(timeLeft <= 0){
+          endGame(false);
+        }
+      }
+
+      function endGame(win){
+        running = false;
+        startBtn.disabled = false;
+        startBtn.setAttribute('aria-pressed', 'false');
+        clearTimeout(spawnTimer);
+        clearInterval(gameTimer);
+        // remove remaining items
+        clearAllItems();
+        // show message in Finnish
+        if(win){
+          messageEl.className = 'message show win';
+          messageEl.textContent = 'Onnittelut! Voitit Hacktoberfestin! 🎉';
+        } else {
+          messageEl.className = 'message show lose';
+          messageEl.textContent = 'Aika loppui — et saavuttanut 4 pistettä. Yritä uudelleen!';
+        }
+      }
+
+      function startGame(){
+        resetUI();
+        running = true;
+        startBtn.disabled = true;
+        startBtn.setAttribute('aria-pressed', 'true');
+        // initial quick spawn
+        spawn();
+        // game timer every second
+        gameTimer = setInterval(tick, 1000);
+      }
+
+      // attach start handler
+      startBtn.addEventListener('click', function(){
+        if(running) return;
+        startGame();
+      });
+
+      // initialize
+      resetUI();
+
+      // accessibility: keyboard activation (space/enter) on items works because they are buttons
+
+    })();
+  </script>
+</body>
+</html>
